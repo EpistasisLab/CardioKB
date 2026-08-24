@@ -18,6 +18,8 @@ Instructions:
     - "high blood pressure" → search for "hypertens"
     - "heart attack" → search for "myocardial infarction"
     - "blood clot" → search for "thromb"
+    - "cardiovascular disease" / "CVD" / "heart diseases" → these are umbrella terms, NOT stored disease names. Expand to specific conditions using OR: `CONTAINS "hypertens" OR ... CONTAINS "coronary" OR ... CONTAINS "heart failure" OR ... CONTAINS "cardiomyopath" OR ... CONTAINS "arrhythm" OR ... CONTAINS "atrial fibrillation" OR ... CONTAINS "myocardial infarction" OR ... CONTAINS "atheroscl" OR ... CONTAINS "stroke" OR ... CONTAINS "thromb"`. Use at least 5-6 major CVD subtypes.
+    - Similarly for other umbrella terms like "cancer", "neurological diseases" — expand to specific stored disease names rather than searching the umbrella term literally.
   - Use `property = toLower("value")` for exact matches **only** when the user clearly asks for a specific identifier. But you must still use **all** preferred properties for that label. Join predicates with `OR`.
 - When a label lists multiple preferred properties (e.g., `prop1 or prop2`), include **all** of them in the WHERE clause joined with `OR` (both for partial and exact matches).
 - CRITICAL: Always write relationships as UNDIRECTED (no arrows):

@@ -111,6 +111,20 @@ MATCH (g:Gene)-[:geneAssociatesWithPhenotype]-(p:Phenotype)
 WHERE toLower(p.phenotypeName) CONTAINS toLower("ventricular tachycardia")
 RETURN DISTINCT g.geneSymbol AS gene, p.phenotypeName AS condition, "Phenotype" AS sourceType
 
+## umbrella_term_expansion_example
+MATCH (d:Drug)-[:drugTreatsDisease]-(ds:Disease)
+WHERE toLower(ds.diseaseName) CONTAINS toLower("hypertens")
+   OR toLower(ds.diseaseName) CONTAINS toLower("coronary")
+   OR toLower(ds.diseaseName) CONTAINS toLower("heart failure")
+   OR toLower(ds.diseaseName) CONTAINS toLower("cardiomyopath")
+   OR toLower(ds.diseaseName) CONTAINS toLower("atrial fibrillation")
+   OR toLower(ds.diseaseName) CONTAINS toLower("myocardial infarction")
+   OR toLower(ds.diseaseName) CONTAINS toLower("atheroscl")
+   OR toLower(ds.diseaseName) CONTAINS toLower("stroke")
+   OR toLower(ds.diseaseName) CONTAINS toLower("thromb")
+RETURN DISTINCT toLower(d.commonName) AS drug, ds.diseaseName AS disease
+LIMIT 100
+
 ## ml_prediction_example
 MATCH (d:Drug)-[r:predictedTreatsDisease]-(ds:Disease)
 WHERE toLower(ds.diseaseName) CONTAINS toLower("atherosclerosis")
