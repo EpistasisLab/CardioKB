@@ -113,7 +113,7 @@ RETURN DISTINCT g.geneSymbol AS gene, p.phenotypeName AS condition, "Phenotype" 
 
 ## umbrella_term_expansion_example
 MATCH (d:Drug)-[:drugTreatsDisease]-(ds:Disease)
-WHERE toLower(ds.diseaseName) CONTAINS toLower("hypertens")
+WHERE (toLower(ds.diseaseName) CONTAINS toLower("hypertens") AND NOT toLower(ds.diseaseName) CONTAINS toLower("intracranial"))
    OR toLower(ds.diseaseName) CONTAINS toLower("coronary")
    OR toLower(ds.diseaseName) CONTAINS toLower("heart failure")
    OR toLower(ds.diseaseName) CONTAINS toLower("cardiomyopath")
@@ -121,7 +121,10 @@ WHERE toLower(ds.diseaseName) CONTAINS toLower("hypertens")
    OR toLower(ds.diseaseName) CONTAINS toLower("myocardial infarction")
    OR toLower(ds.diseaseName) CONTAINS toLower("atheroscl")
    OR toLower(ds.diseaseName) CONTAINS toLower("stroke")
-   OR toLower(ds.diseaseName) CONTAINS toLower("thromb")
+   OR toLower(ds.diseaseName) CONTAINS toLower("thrombosis")
+   OR toLower(ds.diseaseName) CONTAINS toLower("thromboemboli")
+   OR toLower(ds.diseaseName) CONTAINS toLower("aortic")
+   OR toLower(ds.diseaseName) CONTAINS toLower("ventricular")
 RETURN DISTINCT toLower(d.commonName) AS drug, ds.diseaseName AS disease
 LIMIT 100
 
