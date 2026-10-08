@@ -15,6 +15,7 @@ from pathlib import Path
 from functools import lru_cache
 
 import anthropic
+import openai
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -422,25 +423,31 @@ def build_system_prompt(metadata):
 # LLM call (Claude API)
 # ---------------------------------------------------------------------------
 
-def _get_anthropic_client():
-    foundry_key = os.getenv("ANTHROPIC_FOUNDRY_API_KEY")
-    foundry_url = os.getenv("ANTHROPIC_FOUNDRY_BASE_URL")
-    if foundry_key and foundry_url:
-        return anthropic.Anthropic(api_key=foundry_key, base_url=foundry_url)
+PROVIDER_DEFAULTS = {
+    "anthropic": "claude-sonnet-4-6",
+    "openai": "gpt-4o",
+    "azure_openai": "gpt-4o",
+}
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
+
+def _ask_anthropic(system_prompt, user_input, api_key=None, model=None):
     if api_key:
-        return anthropic.Anthropic(api_key=api_key)
+        client = anthropic.Anthropic(api_key=api_key)
+    else:
+        foundry_key = os.getenv("ANTHROPIC_FOUNDRY_API_KEY")
+        foundry_url = os.getenv("ANTHROPIC_FOUNDRY_BASE_URL")
+        if foundry_key and foundry_url:
+            client = anthropic.Anthropic(api_key=foundry_key, base_url=foundry_url)
+        else:
+            env_key = os.getenv("ANTHROPIC_API_KEY")
+            if not env_key:
+                raise RuntimeError(
+                    "No Anthropic API key provided. "
+                    "Enter your key in the AI Settings panel."
+                )
+            client = anthropic.Anthropic(api_key=env_key)
 
-    raise RuntimeError(
-        "No Anthropic API key configured. "
-        "Set ANTHROPIC_API_KEY or ANTHROPIC_FOUNDRY_API_KEY in .env"
-    )
-
-
-def ask_claude(system_prompt, user_input):
-    client = _get_anthropic_client()
-    model = os.getenv("NL2CYPHER_MODEL") or os.getenv("ANTHROPIC_FOUNDRY_MODEL") or "claude-sonnet-4-6"
+    model = model or os.getenv("NL2CYPHER_MODEL") or os.getenv("ANTHROPIC_FOUNDRY_MODEL") or PROVIDER_DEFAULTS["anthropic"]
     response = client.messages.create(
         model=model,
         max_tokens=1024,
@@ -449,6 +456,44 @@ def ask_claude(system_prompt, user_input):
         messages=[{"role": "user", "content": user_input}],
     )
     return response.content[0].text
+
+
+def _ask_openai(system_prompt, user_input, api_key=None, model=None, base_url=None):
+    if not api_key:
+        api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "No OpenAI API key provided. "
+            "Enter your key in the AI Settings panel."
+        )
+
+    kwargs = {"api_key": api_key}
+    if base_url:
+        kwargs["base_url"] = base_url
+
+    client = openai.OpenAI(**kwargs)
+    model = model or PROVIDER_DEFAULTS["openai"]
+    response = client.chat.completions.create(
+        model=model,
+        max_tokens=1024,
+        temperature=0.0,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input},
+        ],
+    )
+    return response.choices[0].message.content
+
+
+def ask_llm(system_prompt, user_input, provider=None, api_key=None, model=None, base_url=None):
+    provider = (provider or "anthropic").lower().replace(" ", "_")
+
+    if provider == "anthropic":
+        return _ask_anthropic(system_prompt, user_input, api_key=api_key, model=model)
+    elif provider in ("openai", "azure_openai"):
+        return _ask_openai(system_prompt, user_input, api_key=api_key, model=model, base_url=base_url)
+    else:
+        raise RuntimeError(f"Unsupported LLM provider: {provider}")
 
 
 # ---------------------------------------------------------------------------
@@ -506,10 +551,10 @@ def _try_query(driver, cypher):
         return 0
 
 
-def nl_to_cypher(question, driver):
+def nl_to_cypher(question, driver, provider=None, api_key=None, model=None, base_url=None):
     metadata = get_metadata(driver)
     system_prompt = build_system_prompt(metadata)
-    raw = ask_claude(system_prompt, question)
+    raw = ask_llm(system_prompt, question, provider=provider, api_key=api_key, model=model, base_url=base_url)
     cypher = sanitize_cypher(raw)
 
     invalid_labels, invalid_rels, invalid_props = validate_cypher(
