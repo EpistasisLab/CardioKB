@@ -29,7 +29,7 @@ flask>=3.0.0
 # Graph database driver (Memgraph via Bolt protocol)
 neo4j>=5.14.0
 
-# LLM SDKs (NL2Cypher / Ask AI feature — supports Anthropic, OpenAI, Azure OpenAI)
+# LLM SDKs (NL2Cypher / Ask AI feature — supports Anthropic and OpenAI)
 anthropic==0.84.0
 openai>=1.0.0
 

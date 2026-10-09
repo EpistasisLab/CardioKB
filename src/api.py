@@ -1017,7 +1017,6 @@ def nl2cypher_endpoint():
     api_key = (body.get('api_key') or '').strip() or None
     provider = (body.get('provider') or '').strip() or None
     model = (body.get('model') or '').strip() or None
-    base_url = (body.get('base_url') or '').strip() or None
 
     driver = _get_neo4j_driver()
     if not driver:
@@ -1025,7 +1024,7 @@ def nl2cypher_endpoint():
 
     try:
         from nl2cypher import nl_to_cypher
-        result = nl_to_cypher(question, driver, provider=provider, api_key=api_key, model=model, base_url=base_url)
+        result = nl_to_cypher(question, driver, provider=provider, api_key=api_key, model=model)
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
