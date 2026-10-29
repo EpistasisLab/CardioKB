@@ -439,7 +439,7 @@ def ask_llm(system_prompt, user_input, provider=None, api_key=None, model=None):
             system=system_prompt,
             messages=[{"role": "user", "content": user_input}],
         )
-        return response.content[0].text
+        return next(b.text for b in response.content if b.type == "text")
 
     elif provider == "openai":
         if not api_key:
