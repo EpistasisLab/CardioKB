@@ -41,6 +41,17 @@ def main():
 
     driver = GraphDatabase.driver(MEMGRAPH_URI, auth=(MEMGRAPH_USER, MEMGRAPH_PASS))
     try:
+        # Exclude predictions that overlap with known drugTreatsDisease edges
+        known_treats = set()
+        with driver.session() as s:
+            for rec in s.run("MATCH (d:Drug)-[:drugTreatsDisease]->(dis:Disease) RETURN id(d) AS did, id(dis) AS disid"):
+                known_treats.add((rec["did"], rec["disid"]))
+        before_filter = len(predictions)
+        predictions = [p for p in predictions if (p["drug_mgid"], p["disease_mgid"]) not in known_treats]
+        excluded = before_filter - len(predictions)
+        print(f"Excluded {excluded} predictions overlapping with known drugTreatsDisease edges")
+        print(f"{len(predictions)} predictions after filtering")
+
         with driver.session() as s:
             r = s.run("MATCH ()-[r:predictedTreatsDisease {source: 'RotatE_LinkPrediction'}]->() DELETE r RETURN count(r)")
             deleted = r.single()[0]

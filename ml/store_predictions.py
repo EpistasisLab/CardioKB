@@ -42,6 +42,13 @@ def main():
                     disease_name_to_id[rec["name"]] = rec["mgid"]
         print(f"Live graph: {len(drug_name_to_id)} Drug nodes, {len(disease_name_to_id)} Disease nodes")
 
+        # Exclude predictions that overlap with known drugTreatsDisease edges
+        known_treats = set()
+        with driver.session() as s:
+            for rec in s.run("MATCH (d:Drug)-[:drugTreatsDisease]->(dis:Disease) RETURN id(d) AS did, id(dis) AS disid"):
+                known_treats.add((rec["did"], rec["disid"]))
+        print(f"Known drugTreatsDisease edges to exclude: {len(known_treats)}")
+
         # Step 1: Check and clear ALL existing predicted edges
         with driver.session() as s:
             r = s.run("""
@@ -85,7 +92,14 @@ def main():
                         if disease_mgid is None:
                             skipped_disease.add(disease_name)
 
-            print(f"\n{method['name']}: {len(predictions)} predictions resolved by name")
+            before_filter = len(predictions)
+            predictions = [p for p in predictions if (p["drug_mgid"], p["disease_mgid"]) not in known_treats]
+            excluded = before_filter - len(predictions)
+
+            print(f"\n{method['name']}: {before_filter} predictions resolved by name")
+            if excluded:
+                print(f"  Excluded {excluded} predictions overlapping with known drugTreatsDisease edges")
+            print(f"  {len(predictions)} predictions after filtering")
             if skipped_drug:
                 print(f"  Skipped {len(skipped_drug)} unresolved drugs (e.g. {list(skipped_drug)[:3]})")
             if skipped_disease:
