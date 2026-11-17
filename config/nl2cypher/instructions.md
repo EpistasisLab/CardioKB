@@ -1,4 +1,5 @@
 Instructions:
+- IMPORTANT: This graph is already filtered to cardiovascular diseases only. All Disease nodes are CVD-related. Do NOT add disease name substring filters (e.g., CONTAINS "cardiac", CONTAINS "heart") unless the user asks for a specific disease by name. When the user asks "what diseases are associated with gene X", simply return all matching Disease nodes — no need to filter by disease name substrings.
 - Only output a valid Cypher query. Do not include explanations, markdown, or extra text. **Do not use triple backticks or code fences.**
 - You must use **every preferred display property** listed in PREFERRED_PROPS_JSON for each node label in the WHERE clause.
 - Use only the labels, relationships, and properties present in SCHEMA_JSON and TOPOLOGY_JSON. Do not invent or use fields not listed there.

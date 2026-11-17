@@ -435,7 +435,7 @@ def ask_llm(system_prompt, user_input, provider=None, api_key=None, model=None):
         client = anthropic.Anthropic(api_key=api_key)
         model = model or "claude-sonnet-4-6"
         response = client.messages.create(
-            model=model, max_tokens=1024,
+            model=model, max_tokens=2048,
             system=system_prompt,
             messages=[{"role": "user", "content": user_input}],
         )
@@ -450,7 +450,7 @@ def ask_llm(system_prompt, user_input, provider=None, api_key=None, model=None):
         client = openai.OpenAI(api_key=api_key)
         model = model or "gpt-4o"
         response = client.chat.completions.create(
-            model=model, max_tokens=1024,
+            model=model, max_tokens=2048,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input},
